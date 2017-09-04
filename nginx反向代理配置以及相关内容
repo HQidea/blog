@@ -1,0 +1,72 @@
+首先需求是这样的：一台对外只开放了80端口的服务器，如何在外部访问服务器的其他端口？
+
+答案当然是反向代理。正好服务器上也装有nginx，于是就来折腾nginx的配置：
+
+# proxy
+location ~ /proxy/\d+$ {
+    rewrite ^ $request_uri/ permanent;
+}
+
+location ~ /proxy/(\d+)/(.*) {
+    proxy_pass http://127.0.0.1:$1/$2;
+    proxy_redirect / $request_uri;
+}
+
+location ~* \.(css|js|png|jpg|jpeg|gif|bmp|ico|map)$ {
+    root /home/projects/www;
+
+    if ($http_referer ~ (?<prefix>/proxy/\d+/)) {
+        rewrite ^ $prefix$request_uri last;
+    }
+}
+
+效果：发往
+
+http://domain/proxy/$port/$anything
+
+的所有请求由nginx代理后转发到
+
+http://127.0.0.1:$port/$anything
+
+说明：
+
+1. 第一个location表示：当请求的是
+
+http://domain/proxy/$port
+
+时重定向至
+
+http://domain/proxy/$port/
+
+最后的斜杠很关键，它会影响相对路径
+
+nginx中，当location使用了正则表达式匹配路径时，这个斜杠是不会自动添加的，除非设置了server_name_in_redirect(未测试)。
+[](http://nginx.org/en/docs/http/ngx_http_core_module.html#server_name_in_redirect)
+
+2. 第二个location中，nginx反向代理了请求。
+
+proxy_redirect / $request_uri;
+
+表示当后台程序返回301/302时重写Response Headers中的Location，以便新请求仍旧通过代理访问。
+
+3. 第三个location判断了所有静态文件的Referer，当匹配的时候则重定向给其他端口。
+
+4. location的不同语法location [ = | ~ | ~* | ^~ ] uri { ... }之间存在优先级关系，相同的按先后顺序处理
+[](http://nginx.org/en/docs/http/ngx_http_core_module.html#location)
+
+5. rewrite的四种参数：
+[](http://nginx.org/en/docs/http/ngx_http_rewrite_module.html#rewrite)
+last　　相当于重新发起请求
+break　　停止处理接下来的rewrite
+redirect　　相当于302
+permanent　　相当于301
+
+6. 当location不是　/　并且proxy_pass只有域名时，域名后是否加　/　的效果是不一样的
+
+7. nginx内置变量均可通过
+
+if ($variable ~ $regexp)
+
+来匹配
+
+8. nginx采用的是perl风格的正则表达式，可用(?<name>pattern)捕获内容到变量$name中，此外还可使用set来设置变量

@@ -1,0 +1,181 @@
+这篇文章最早在4月份就开始写了，后来由于种种事情的耽搁，直到8月31日才正式完成。期间各软件都有了更新的版本：微软出了Windows 8 Release Preview，nginx升级为1.2.3，php升级到5.4.6，MySQL升级为5.5.27。本教程中使用的各软件以8月31日最新版为准。
+
+－－－－－－－－－－－－－－－－－华丽的分割线－－－－－－－－－－－－－－－－－
+
+所谓WNPM就是在Windows下nginx+php+MySQL的服务器环境。
+
+本教程使用的是Windows 7, nginx-1.0.15, PHP-5.4.0, MySQL-5.5.23. (April 2012)
+
+本教程使用的是Windows 7, nginx-1.2.3, PHP-5.4.6, MySQL-5.5.27. (August 31st  2012)
+
+均为目前最新稳定版，不同版本的程序配置可能略有不同。
+
+Step 1
+
+下载nginx http://nginx.org/en/download.html
+
+Development version 开发版本
+
+Stable version 稳定版
+
+Legacy versions 旧版本
+
+一般没有特殊需求的可以下载Stable version。注意要选nginx/Windows。
+
+[点此直接下载](http://nginx.org/download/nginx-1.2.3.zip)
+
+Step 2
+
+下载php http://windows.php.net/download/
+
+VC9 x86 Non Thread Safe 使用Visual Studio 2008 compiler编译的非线程安全版本
+
+VC9 x86 Thread Safe 使用Visual Studio 2008 compiler编译的线程安全版本
+
+编译器：
+
+PHP5.4已经没有使用Visual Studio 6 compiler编译的了，所以可以不用区分VC6和VC9的区别。
+
+线程安全：
+
+Thread Safe是线程安全，执行时会进行线程安全检查，以防止有新要求就启动新线程的CGI执行方式而耗尽系统资源；而Non Thread Safe是非线程安全，在执行时不进行线程安全检查。
+
+执行方式：
+
+ISAPI执行方式是以DLL动态库的形式使用，可以在被用户请求后执行，在处理完一个用户请求后不会马上消失，所以需要进行线程安全检查，这样来提高程序的执行效率，所以如果是以ISAPI来执行PHP，建议选择Thread Safe版本。
+而FastCGI执行方式是以单一线程来执行操作，所以不需要进行线程的安全检查，除去线程安全检查的防护反而可以提高执行效率，所以，如果是以FastCGI来执行PHP，建议选择Non Thread Safe版本。
+
+讲了这么多，总结一下：nginx搭配VC9 x86 Non Thread Safe
+
+[点此直接下载](http://windows.php.net/downloads/releases/php-5.4.6-nts-Win32-VC9-x86.zip)
+
+Step 3
+
+下载MySQL http://www.mysql.com/downloads/mysql/
+
+MySQL Community Server 社区版，免费
+
+MySQL Enterprise Edition 企业版，付费
+
+MySQL Cluster 集群版，付费
+
+MySQL Workbench 用于设计数据库
+
+我们当然选择MySQL Community Server了。
+
+各位可以根据自己的需求下载，下面的链接为32位免安装文件。
+
+[点此直接下载](http://www.mysql.com/get/Downloads/MySQL-5.5/mysql-5.5.27-win32.zip/from/http://cdn.mysql.com/)
+
+Step 4
+
+至此文件都已经下载完了，开始最关键的步骤了：配置。
+
+我们将下载到的文件解压到单独文件夹。
+
+
+
+首先是配置nginx，进入conf目录，编辑nginx.conf文件。
+
+将44行root   html改为root   D:/www
+
+#D:/www为网站根目录，路径分隔符使用"\" "/"都不会出错，但是官方要求使用"/"
+
+Paths in a configuration file must be specified in UNIX-style using forward slashes
+
+#详见http://nginx.org/en/docs/windows.html
+
+第45行index  index.html index.htm改为index  index.php index.html index.htm
+
+去除65行至71行的注释符"#"
+
+66行照44行修改root   html改为root   D:/www
+
+69行/scripts改为$document_root
+
+#$document_root就是66行的目录，这样修改避免出现"No input file specified."的错误
+
+这样nginx就配置完了，回到nginx目录双击nginx.exe就可以运行了。
+
+此时电脑已经具备服务器功能，但是只能显示html文件，要解析php文件还要往下看~
+
+Step 5
+
+配置php
+
+首先将php.ini-development重命名为php.ini
+
+php.ini-development和php.ini-production的区别：
+二者不同之处在于php.ini-development适合开发程式使用（测试用），
+而php.ini-production拥有较高的安全性设定，则适合上线当产品使用。
+
+然后编辑php.ini文件
+
+去掉730行的分号extension_dir = "ext"
+
+;很多教程将extension_dir改为绝对路径，我觉的没必要，用相对路径即可
+
+去掉763行的分号cgi.fix_pathinfo=1
+
+将第919行;date.timezone =改为date.timezone = Asia/Shanghai
+
+;关于时区的更多内容请看http://www.php.net/manual/en/timezones.asia.php
+
+接着根据自己的需要启用一些扩展，在868行后面，去掉分号启用扩展
+
+3个常用的扩展
+
+extension=php_gd2.dll    ;GD库扩展，用于显示验证码等
+extension=php_mysql.dll
+extension=php_mysqli.dll    ;这两个是MySQL扩展
+
+再说说其他配置，有些教程需要将libmysql.dll等某些文件复制到系统目录下，我没复制照样能用，所以觉得不是很必要。
+
+好了，php也配置完了。启动php可不是双击这么简单，先用命令行进入php所在文件夹(e.g. cd c:\php)，再输入php-cgi.exe -b 127.0.0.1:9000即可。
+
+也有很多教程喜欢在第二条命令的后面加上-c c:\php\php.ini，我觉得是多此一举：
+
+①又是用绝对路径，-c php.ini可以达到同样的目的
+
+②php会默认的加载其目录下的php.ini文件
+
+在D:\www文件夹下新建index.php文件，内容如下：
+
+<?php
+    phpinfo();
+?>
+
+打开浏览器，在地址栏内输入localhost，出现下图内容则说明配置成功！
+
+
+
+Step 6
+
+配置MySQL
+
+其实MySQL不用配置，直接运行bin目录下mysqld.exe就可以了。
+
+默认用户root，密码为空。
+
+关于修改root密码的方法有很多，这里只介绍一种。
+
+shell> mysql -u root
+mysql> UPDATE mysql.user SET Password = PASSWORD('newpwd')
+    ->     WHERE User = 'root';
+mysql> FLUSH PRIVILEGES;
+其他方法请见http://dev.mysql.com/doc/refman/5.5/en/default-privileges.html，或用phpMyAdmin，详情Google
+
+Step 7
+
+配置好的WNPM已可以使用，但是启动不方便，而且php-cgi.exe窗口不能关闭。为此，很多文章都会提到使用RunHiddenConsole来隐藏命令行窗口，其实没必要，下面这段bat可以达到同样的效果。
+
+@echo off
+if "%1" == "h" goto begin
+mshta vbscript:createobject("wscript.shell").run("%~nx0 h",0)(window.close)&&exit
+:begin
+cd C:\nginx
+start nginx
+cd C:\mysql\bin
+start mysqld
+cd C:\php
+php-cgi.exe -b 127.0.0.1:9000

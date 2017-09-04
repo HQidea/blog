@@ -1,0 +1,113 @@
+效果图：
+
+HTML代码：
+
+<div id="flashbox" class="smallslider">
+{pc:content action="position" posid="<!-- num -->" thumb="1" order="listorder DESC" num="5"}
+    <ul>
+    {loop $data $r}
+        <li>
+            <a href="{$r[url]}"><img src="{thumb($r[thumb],<!-- width -->,<!-- height -->)}" alt="{$r[title]}"/></a>
+        </li>
+    {/loop}
+    </ul>
+{/pc}
+</div>
+
+其中<!-- width -->,<!-- height -->分别为缩略图的宽和高，不用px（CSS中相应位置需要加上px）；<!-- num -->为下列数字之一：
+
+ID	推荐位名称
+2	首页头条推荐
+1	首页焦点图推荐
+13	栏目页焦点图
+12	首页图片推荐
+10	栏目首页推荐
+9	网站顶部推荐
+8	图片频道首页焦点图
+5	推荐下载
+
+最好进行CSS初始化：
+
+margin: 0;
+padding: 0;
+
+CSS代码：（<!-- width -->,<!-- height -->应与HTML中一致）
+
+.smallslider{
+    border: 3px solid #9ED5F4;
+    float: left;
+    width: <!-- width -->;
+    height: <!-- height -->;
+    position: relative;
+    overflow: hidden;
+}
+.smallslider ul{
+    list-style-type: none;
+    position: absolute;
+    width: auto;
+    height: auto;
+}
+.smallslider li a img{
+    width: <!-- width -->;
+    height: <!-- height -->;
+    vertical-align: top;
+}
+.smallslider h3{
+    position: absolute;
+    font-weight: bold;
+    font-size: 12px;
+    text-indent: 2%;
+    line-height: 26px;
+    z-index: 102;
+    width: 98%;
+    color: #CCC;
+}
+.smallslider h3 a:link, .smallslider h3 a:visited{
+    text-decoration: none;
+    color: #4A82D4;
+}
+.smallslider h3 a:hover{
+    text-decoration: underline;
+    color: #FF6600;
+}
+.smallslider-btns{
+    position: absolute;
+    z-index: 103;
+}
+.smallslider-btns span{
+    background-color: #FFFFFF;
+    border: 1px solid #DCDCDC;
+    color: #9F9F9F;
+    cursor: pointer;
+    float: left;
+    font-size: 12px;
+    height: 16px;
+    line-height: 16px;
+    text-align: center;
+    width: 16px;
+}
+.smallslider-btns span.current-btn{
+    background-color: #028BE9;
+    border: 1px solid #A00100;
+    color: white;
+    font-size: 13px;
+    font-weight: bold;
+}
+.smallslider-lay{
+    position: absolute;
+    background: #99D4F4;
+    height: 26px;
+    width: 100%;
+    z-index: 101;
+}
+
+JS代码：（前两行jQuery可以Google）
+
+<script src="jquery-1.3.2.min.js"></script>
+<script src="smallslider.js"></script>
+<script>
+    $(document).ready(function(){
+        $('#flashbox').smallslider();
+    });
+</script>
+

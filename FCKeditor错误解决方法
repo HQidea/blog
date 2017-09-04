@@ -1,0 +1,19 @@
+如果网页显示错误，并提示“由于出现错误 800a025e 导致此项操作无法完成”，那是因为当iRite的值是empty的时候，以下配置将在IE中失效：(FCKConfig.StartupFocus = false).
+
+解决方法：
+
+打开fckeditorcode_ie.js查找"FCK.EditorDocument.body.childNodes.length"
+
+增加下面红色的代码，保存就可以了
+
+(FCK.EditorDocument.body.childNodes.length==1
+&&FCK.EditorDocument.body.firstChild==D)
+{if (FCKSelection._GetSelectionDocument
+(FCK.EditorDocument.selection)!=FCK.EditorDocument)
+return;var B=FCK.EditorDocument.body.createTextRange();
+var F=false;if (!D.childNodes.firstChild)
+{D.appendChild
+(FCKTools.GetElementDocument(D).createTextNode('\ufeff'));
+F=true;};B.moveToElementText(D);B.select();
+if (F) B.pasteHTML('');}}}};
+function _FCK_EditingArea_OnLoad()

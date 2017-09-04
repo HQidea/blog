@@ -1,0 +1,50 @@
+示例：
+
+
+<!--[if lte IE 6]>
+<![endif]-->
+IE6及其以下版本可见
+
+<!--[if lte IE 7]>
+<![endif]-->
+IE7及其以下版本可见
+
+<!--[if IE 6]>
+<![endif]-->
+只有IE6版本可见
+
+<!--[if !IE]>
+<![endif]>
+除了IE以外的版本
+
+<!--[if lt IE 8]>
+<![endif]-->
+IE8以下的版本可见
+
+<!--[if gte IE 7]>
+<![endif]-->
+IE7及其以上的版本可见
+
+注解：
+lte:就是less than or equal to的简写，也就是小于或等于的意思。
+lt:就是less than的简写，也就是小于的意思。
+gte:就是greater than or equal to的简写，也就是大于或等于的意思。
+gt:就是greater than的简写，也就是大于的意思。
+!:就是不等于的意思。
+
+注意：默认的CSS样式应该位于HTML文档的首行，进行条件注释判断的所有内容必须位于该默认样式之后。比如如下代码，在IE浏览器下执行显示为红色，而在非IE浏览器下显示为黑色。如果把条件注释判断放在首行，则不能实现。
+
+<style type="text/css">
+    body{
+        background-color: #000;
+    }
+</style>
+<!-–[if IE]>
+<style type="text/css">
+    body{
+        background-color: #F00;
+    }
+</style>
+<![endif]–->
+
+同时，有人会试图使用<!–-[if !IE]>来定义非IE浏览器下的状况。但是，条件注释只有在IE浏览器下才能执行，所以这个代码在非IE浏览下并不是执行该条件下的定义，而是当做注释视而不见。

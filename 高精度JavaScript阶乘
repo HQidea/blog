@@ -1,0 +1,36 @@
+最近在用js实现一些算法，虽然历来算法都是追求性能的，而js在这方面完全没有优势，但是对于在学习js的同时也能掌握一些算法来说还是挺有价值的。下面就是一个例子：
+
+(function() {
+    var factorial = function(n) {
+        var result = [];
+
+        var calculator = function() {
+            var i, j, temp, carry;
+
+            result[0] = 1;
+
+            if (n < 2)
+                return;
+
+            for (i = 2; i <= n; i++) {
+                carry = 0;
+                for (j = 0; j < result.length; j++) {
+                    temp = result[j] * i + carry;
+                    carry = Math.floor(temp / 10);
+                    result[j] = temp % 10;
+
+                    if (j === result.length - 1 && carry) {
+                        result[j + 1] = 0;
+                    }
+                }
+            }
+        };
+
+        return function() {
+            calculator();
+            console.log(result.reverse().join(''));
+        }();
+    };
+
+    factorial(20);
+})();

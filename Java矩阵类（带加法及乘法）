@@ -1,0 +1,110 @@
+import java.util.*;
+
+class Matrix{
+    public static void main(String[] args){
+        Matrix m1 = new Matrix();
+        Matrix m2 = new Matrix();
+        int operation;
+        Scanner r = new Scanner(System.in);
+
+        m1.In();
+        m2.In();
+        System.out.print("请选择运算方法（1表示加法，2表示乘法）：");
+        operation = r.nextInt();
+        if (operation == 1){
+            System.out.println("结果是：");
+            m1.Add(m2).Show();
+        }
+        else if (operation == 2){
+            System.out.println("结果是：");
+            m1.Multi(m2).Show();
+        }
+        else{
+            System.out.println("Error: No such operation.");
+        }
+    }
+
+    Matrix(){
+        cols = rows = 0;
+        mat = null;
+    }
+    Matrix(int c, int r, double[][] elem){
+        cols = c;
+        rows = r;
+        mat = Arrays.copyOf(elem, elem.length);
+    }
+
+    Matrix Add(Matrix m){
+        if (this.cols != m.cols || this.rows != m.rows){
+            System.out.println("Error: Cannot add.");
+            return new Matrix();
+        }
+
+        double[][] result = new double[this.cols][this.rows];
+        for (int c = 0; c < result.length; c++){
+            for (int r = 0; r < result[c].length; r++){
+                result[c][r] += this.mat[c][r] + m.mat[c][r];
+            }
+        }
+        return new Matrix(this.cols, this.rows, result);
+    }
+    Matrix Multi(Matrix m){
+        if (this.rows != m.cols){
+            System.out.println("Error: Cannot multiply.");
+            return new Matrix();
+        }
+
+        double[][] result = new double[this.cols][m.rows];
+        for (int c = 0; c < result.length; c++){
+            Arrays.fill(result[c], 0);
+            for (int r = 0; r < result[c].length; r++){
+                for (int i = 0; i < this.rows; i++){
+                    result[c][r] += this.mat[c][i] * m.mat[i][r];
+                }
+            }
+        }
+        return new Matrix(this.cols, m.rows, result);
+    }
+
+    void In(){
+        Scanner s = new Scanner(System.in);
+
+        _in++;
+        System.out.println("请输入第" + _in + "个矩阵的行数：");
+        this.cols = s.nextInt();
+        System.out.println("请输入第" + _in + "个矩阵的列数：");
+        this.rows = s.nextInt();
+        this.mat = new double[this.cols][this.rows];
+        System.out.println("请依次输入第" + _in + "个矩阵的元素：");
+        for (int c = 0; c < this.cols; c++){
+            for (int r = 0; r < this.rows; r++){
+                this.mat[c][r] = s.nextDouble();
+            }
+        }
+    }
+    void Show(){
+        if (mat == null){
+            //System.out.println("Error: No such matrix.");
+            return;
+        }
+
+        for (double[] c : this.mat){
+            System.out.print("|");
+            for (double r : c){
+                System.out.print(" " + r + " ");
+            }
+            System.out.println("|");
+        }
+    }
+
+    int cols, rows;
+    double[][] mat;
+    static int _in = 0;
+}
+
+说明：默认构造函数可以留空，系统也会做相应的初始化，但是建议保留。
+
+Matrix(){
+    //cols = rows = 0;
+    //mat = null;
+}

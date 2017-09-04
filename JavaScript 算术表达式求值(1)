@@ -1,0 +1,92 @@
+支持四则运算、带括号。原理是利用栈，根据运算符的优先级将式子转化为后缀表达式后求值。
+
+(function() {
+    Array.prototype.top = function() {
+        return this[this.length - 1];
+    };
+    var arithmetic = function(math) {
+        var stack = [];
+        var init = function(cb) {
+            var i,
+                op = [],
+                arr = math.split(''),
+                length = arr.length,
+                isAfterNumber = 0;
+            for (i = 0; i < length; i++) {
+                switch (arr[i]) {
+                    case '+':
+                    case '-':
+                        while (/[-+*/]/.test(op.top())) {
+                            stack.push(op.pop());
+                        }
+                        op.push(arr[i]);
+                        isAfterNumber = 0;
+                        break;
+                    case '*':
+                    case '/':
+                        if (/[*/]/.test(op.top())) {
+                            stack.push(op.pop());
+                        }
+                        op.push(arr[i]);
+                        isAfterNumber = 0;
+                        break;
+                    case '(':
+                        op.push(arr[i]);
+                        isAfterNumber = 0;
+                        break;
+                    case ')':
+                        while (/[-+*/]/.test(op.top())) {
+                            stack.push(op.pop());
+                        }
+                        op.pop();
+                        isAfterNumber = 0;
+                        break;
+                    default:
+                        if (isAfterNumber) {
+                            stack.push(stack.pop() + arr[i]);
+                        }
+                        else {
+                            stack.push(arr[i]);
+                            isAfterNumber = 1;
+                        }
+                }
+            }
+            while (op.length) {
+                stack.push(op.pop());
+            }
+            cb && cb();
+        };
+        var calc = function() {
+            var first, a, b, result = [];
+
+            while (stack.length) {
+                first = stack.shift();
+                if (/[-+*/]/.test(first)) {
+                    a = result.pop();
+                    b = result.pop();
+                    result.push(op(a, b, first));
+                }
+                else {
+                    result.push(first);
+                }
+            }
+            console.log(result[0]);
+        };
+        var op = function(a, b, op) {
+            switch (op) {
+                case '+':
+                    return Number(b) + Number(a);
+                case '-':
+                    return b - a;
+                case '*':
+                    return b * a;
+                case '/':
+                    return b / a;
+            }
+        };
+
+        init(calc);
+        // console.log(stack);
+    };
+    arithmetic('1-22+3-(1*2+3/1)+20.1*6/6*8');
+})();

@@ -1,0 +1,45 @@
+Problem Description: http://acm.hdu.edu.cn/showproblem.php?pid=2024
+
+运行样例：
+
+输入：
+3
+12ajf
+fi8x_a
+ff  ai_2
+输出：
+no
+yes
+no
+参考源码：
+
+#include <iostream>
+using namespace std;
+
+bool Name(const char* p)
+{
+    for (int i = 0; i < strlen(p); i++)
+        if (p[i] < '0' || (p[i] > '9' && p[i] < 'A') || (p[i] > 'Z' && p[i] < '_') || (p[i] > '_' && p[i] < 'a') || p[i] > 'z')
+            return false;      //排除特殊字符
+    if (p[0] >= '0' && p[0] <= '9')
+        return false;          //开头不能是数字
+
+    return true;
+}
+
+int main()
+{
+    int n;
+
+    cin >> n;
+    cin.get();                 //处理回车
+    for (int i = 1; i <= n; i++)
+    {
+        char sz[51];
+        cin.getline(sz, 51);   //读入字符串，包括空格
+        cout << (Name(sz) ? "yes" : "no") << endl;
+    }
+
+    system("pause");
+    return 0;
+}

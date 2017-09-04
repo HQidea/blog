@@ -1,0 +1,199 @@
+本代码由VS2010编译通过并且可以在Win7 x64上正常运行。其余平台均未测试。
+
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <urlmon.h>
+#include <time.h>
+#include <wininet.h>
+#include <shlobj.h>
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "urlmon.lib")
+using namespace std;
+
+int main()
+{
+    char* getIPfromHost(char*);
+
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != NO_ERROR)
+    {
+        printf("WSAStartup failed\n");
+        system("pause");
+        return 1;
+    }
+
+    SOCKET s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (s == INVALID_SOCKET)
+    {
+        printf("Error at socket(): %ld\n", WSAGetLastError());
+        WSACleanup();
+        system("pause");
+        return 1;
+    }
+
+    struct sockaddr_in addr;
+    char* ipAddr = getIPfromHost("bing.com");
+    cout << ipAddr << endl;
+    int port = 80;
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr(ipAddr);
+    addr.sin_port = htons(port);
+    int c = connect(s, (LPSOCKADDR)&addr, sizeof(addr));
+    if (c == SOCKET_ERROR)
+    {
+        closesocket(s);
+        printf("Unable to connect to server: %ld\n", WSAGetLastError());
+        WSACleanup();
+        system("pause");
+        return 1;
+    }
+
+    char* header = "GET /HPImageArchive.aspx?format=xml&idx=0&n=1 HTTP/1.1\r\nHost: www.bing.com\r\nConnection: keep-alive\r\n\r\n";
+    int snd = send(s, header, strlen(header), 0);
+    if (snd == SOCKET_ERROR)
+    {
+        printf("send failed: %d\n", WSAGetLastError());
+        closesocket(s);
+        WSACleanup();
+        return 1;
+    }
+
+    int shtdwn = shutdown(s, SD_SEND);
+    if (shtdwn == SOCKET_ERROR)
+    {
+        printf("shutdown failed: %d\n", WSAGetLastError());
+        closesocket(s);
+        WSACleanup();
+        return 1;
+    }
+
+    char recvBuf[BUFSIZ + 1];
+    string html;
+    int r;
+    do
+    {
+        r = recv(s, recvBuf, BUFSIZ, 0);
+        if (r > 0)
+        {
+            //printf("Bytes received: %d\n", r);
+            recvBuf[r] = '\0';
+            //cout << recvBuf << endl;
+            html.append(recvBuf);
+        }
+        else if (r == 0)
+            printf("Connection closed\n");
+        else
+            printf("recv failed: %d\n", WSAGetLastError());
+    } while (r > 0);
+
+    //cout << html << endl;
+    closesocket(s);
+    WSACleanup();
+
+    int start = html.find("<url>");
+    int end = html.find("</url>");
+    string url;
+    if (start < end)
+    {
+        url = "http://www.bing.com" + html.substr(start + 5, end - start - 5);
+        cout << url << endl;
+    }
+    else
+    {
+        cout << "解析网页失败！" << endl;
+        system("pause");
+        return 1;
+    }
+
+    /*
+    struct tm *local;
+    time_t t;
+    t = time(NULL);
+    local = localtime(&t);
+    string today;
+    stringstream ss;
+    ss << local->tm_year + 1900;
+    local->tm_mon + 1 < 10 ? ss << '0' << local->tm_mon + 1 : ss << local->tm_mon + 1;
+    local->tm_mday < 10 ? ss << '0' << local->tm_mday : ss << local->tm_mday;
+    ss >> today;
+
+    string path = "D:\\Wallpaper\\" + today + ".jpg";
+    cout << path << endl;
+    */
+
+    HRESULT hr;
+
+    char file[MAX_PATH];
+    cout << "正在下载..." << endl;
+    hr = URLDownloadToCacheFile(NULL, url.c_str(), file, MAX_PATH, 0, NULL);
+    if (SUCCEEDED(hr))
+    {
+        cout << "下载成功！" << endl;
+        //cout << file << endl;
+    }
+    else
+    {
+        cout << "下载失败！" << endl;
+        system("pause");
+        return 1;
+    }
+
+    int fileLen = MultiByteToWideChar(CP_ACP, 0, file, -1, NULL, 0);
+    wchar_t* wFile = new wchar_t[fileLen + 1];
+    MultiByteToWideChar(CP_ACP, 0, file, -1, wFile, fileLen);
+    wcout << wFile << endl;
+
+    IActiveDesktop* pActiveDesktop;
+    CoInitialize(NULL);
+    hr = CoCreateInstance(CLSID_ActiveDesktop, NULL, CLSCTX_ALL, IID_IActiveDesktop, (LPVOID*) &pActiveDesktop);
+    if (SUCCEEDED(hr))
+    {
+        cout << "正在设置壁纸..." << endl;
+        hr = pActiveDesktop->SetWallpaper(wFile, 0);
+        if (SUCCEEDED(hr))
+        {
+            hr = pActiveDesktop->ApplyChanges(AD_APPLY_ALL);
+            if (SUCCEEDED(hr))
+                cout << "设置成功！" << endl;
+            else
+                cout << "ApplyChanges Error: " << hr << endl;
+        }
+        else
+        {
+            cout << "SetWallpaper Error: " << hr << endl;
+        }
+    }
+    else
+    {
+        cout << "CoCreateInstance Error: " << hr << endl;
+    }
+    pActiveDesktop->Release();
+    CoUninitialize();
+
+    system("pause");
+    return 0;
+}
+
+char* getIPfromHost(char* hostname)
+{
+    char* ip;
+    struct addrinfo *result = NULL;
+    struct sockaddr_in  *sockaddr_ipv4;
+    DWORD dwRetval = getaddrinfo(hostname, NULL, NULL, &result);
+    if (dwRetval != 0)
+    {
+        printf("getaddrinfo failed with error: %d\n", dwRetval);
+        WSACleanup();
+        system("pause");
+        exit(1);
+    }
+    sockaddr_ipv4 = (struct sockaddr_in *) result->ai_addr;
+    ip = inet_ntoa(sockaddr_ipv4->sin_addr);
+    freeaddrinfo(result);
+    return ip;
+}
+
+下一版本估计会实现每天自动更新功能。

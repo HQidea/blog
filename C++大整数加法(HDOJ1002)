@@ -1,0 +1,91 @@
+Problem Description: http://acm.hdu.edu.cn/showproblem.php?pid=1002
+
+运行样例：
+
+输入：
+2
+1
+2
+112233445566778899
+998877665544332211
+输出：
+Case 1:
+1 + 2 = 3
+
+Case 2:
+112233445566778899 + 998877665544332211 = 1111111111111111110
+参考源码：
+
+#include <iostream>
+using namespace std;
+
+#define MAX_LENGTH 1000
+
+// pszOperand1 - 第一个操作数字符串
+// pszOperand2 - 第二个操作数字符串
+// pszResult - 返回相加后的结果字符串
+
+void Add(const char *pszOperand1, const char *pszOperand2, char *pszResult)
+{
+    int i, j, k;
+    short iResult[MAX_LENGTH + 1];                 // 用于临时存放结果，从数组后面开始存放
+    short iCarry = 0;                              // 当前的进位，初始为0
+
+    i = (int) strlen(pszOperand1) - 1;             // 第一个操作数最后一个字符的下标
+    j = (int) strlen(pszOperand2) - 1;             // 第二个操作数最后一个字符的下标
+    k = MAX_LENGTH + 1;                            // 当前相加位在运算结果数组中的下标
+
+    // 从后面开始逐位相加
+
+    while (i >= 0 || j >= 0)
+    {
+        k--;
+        iResult[k] = 0;
+        if (i >= 0)                                // 如果第一个操作数还有数位未处理完
+            iResult[k] += pszOperand1[i--] - '0';
+        if (j >= 0)                                // 如果第二个操作数还有数位未处理完
+            iResult[k] += pszOperand2[j--] - '0';
+        iResult[k] += iCarry;
+
+        if (iResult[k] >= 10)                      // 是否有进位
+        {
+            iResult[k] -= 10;
+            iCarry = 1;
+        }
+        else
+            iCarry = 0;
+    }
+
+    // 处理最后一个进位
+
+    if (iCarry == 1)
+        iResult[--k] = 1;
+
+    // 生成返回的运算结果字符串
+
+    i = 0;
+    for (; k <= MAX_LENGTH; k++, i++)
+        pszResult[i] = iResult[k] + '0';
+    pszResult[i] = '\0';
+}
+
+
+int main()
+{
+    char szOperand1[MAX_LENGTH + 1], szOperand2[MAX_LENGTH + 1], szResult[MAX_LENGTH + 2];
+    int iNumCases;
+
+    cin >> iNumCases;
+    for (int i = 0; i < iNumCases; i++)
+    {
+        cin >> szOperand1 >> szOperand2;
+        Add(szOperand1, szOperand2, szResult);
+        cout << "Case " << i + 1 << ":" << endl;
+        cout << szOperand1 << " + " << szOperand2 << " = " << szResult << endl;
+        if (i < iNumCases - 1)                     // 每个Case间空一行，最后一个Case后不用空行
+            cout << endl;
+    }
+
+    system("pause");
+    return 0;
+}

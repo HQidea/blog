@@ -1,0 +1,91 @@
+#include <iostream>
+#include <string>
+#include <winsock2.h>
+#pragma comment(lib, "ws2_32.lib")
+using namespace std;
+
+int main()
+{
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != NO_ERROR)
+    {
+        printf("WSAStartup failed\n");
+        system("pause");
+        return 1;
+    }
+
+    SOCKET s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (s == INVALID_SOCKET)
+    {
+        printf("Error at socket(): %ld\n", WSAGetLastError());
+        WSACleanup();
+        system("pause");
+        return 1;
+    }
+
+    struct sockaddr_in addr;
+    char* ipAddr = "61.135.169.125";
+    int port = 80;
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr(ipAddr);
+    addr.sin_port = htons(port);
+    int c = connect(s, (LPSOCKADDR)&addr, sizeof(addr));
+    if (c == SOCKET_ERROR)
+    {
+        closesocket(s);
+        printf("Unable to connect to server: %ld\n", WSAGetLastError());
+        WSACleanup();
+        system("pause");
+        return 1;
+    }
+
+    char* header = "GET / HTTP/1.1\r\nConnection: keep-alive\r\n\r\n";
+    int snd = send(s, header, strlen(header), 0);
+    if (snd == SOCKET_ERROR)
+    {
+        printf("send failed: %d\n", WSAGetLastError());
+        closesocket(s);
+        WSACleanup();
+        return 1;
+    }
+
+    int shtdwn = shutdown(s, SD_SEND);
+    if (shtdwn == SOCKET_ERROR)
+    {
+        printf("shutdown failed: %d\n", WSAGetLastError());
+        closesocket(s);
+        WSACleanup();
+        return 1;
+    }
+
+    char recvBuf[BUFSIZ];
+    string html;
+    int r;
+    do
+    {
+        r = recv(s, recvBuf, BUFSIZ, 0);
+        if (r > 0)
+        {
+            //printf("Bytes received: %d\n", r);
+            recvBuf[r] = '\0';
+            //cout << recvBuf << endl;
+            html.append(recvBuf);
+        }
+        else if (r == 0)
+            printf("Connection closed\n");
+        else
+            printf("recv failed: %d\n", WSAGetLastError());
+    } while (r > 0);
+
+    cout << html << endl;
+
+    closesocket(s);
+    WSACleanup();
+
+    system("pause");
+    return 0;
+}
+
+这个算是第一版吧，有一些地方还不完善，比如只能使用ip（代码中的ip为百度），如果网页编码是utf-8则会导致中文乱码。
+
+另外header可根据需要修改。

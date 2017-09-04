@@ -1,0 +1,36 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<conio.h>
+#include<string.h>
+#define L 32
+login()//密码
+{
+    int i=0;
+    char pwd[L]="\n",chk[L]={10,'1','2','3',13};//固定密码为123
+    printf("请输入密码：");
+    i++;//密码从pwd[1]开始赋值
+    while((pwd[i]=getch())!=13)//getch()读入，但不显示
+    {
+        if(pwd[i]!=8)
+        {
+            printf("*");//模拟密码输入
+            i++;
+        }
+        else
+        {
+            printf("\b \b");//模拟退格
+            i--;
+        }
+    }
+    if(strcmp(pwd,chk)==0)//判断密码正误
+    {
+        printf("\nRight!\n");
+    }
+    else
+    {
+        printf("\nWrong!\n");
+        exit(0);
+    }
+}
+
+程序写的比较简陋，各位可以根据自己需求改进。

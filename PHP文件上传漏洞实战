@@ -1,0 +1,32 @@
+首先来看看HTTP上传文件的请求头：
+
+Content-Type 指定为 multipart/form-data，并且附带boundaryKey来标记接下来的数据域
+
+Payload 以'--' + boundaryKey标记开始，以'--' + boundaryKey + '--'标记结束
+
+Content-Disposition 指明了表单的name以及上传的文件名
+
+PHP后台方面，使用$_FILES['name']来接受文件。$_FILES['name']包含了Payload中的信息，主要包括name和type，name是Payload中的filename，type是Payload中的Content-Type。
+
+有了这些信息，我们就能伪造POST请求来绕过一些PHP的检测，比如对后缀名的检测、对Mime-Type(Content-Type)的检测等。
+
+对此，我使用了nodejs来伪造POST请求。完整代码-->
+[](https://github.com/HQidea/fake-post/blob/master/app.js)
+
+var file = {
+  name: 'index.php',
+  fakeName: 'index.php\0.jpg',
+  type: 'image/jpeg',
+  input: 'file'
+};
+
+name为要上传的文件，fakeName中'\0'会让PHP认为文件名到此结束（跟C语言字符串数组中的'\0'一样），但是感觉实际没有什么作用。type即Mime-Type，可以根据网站的要求伪造以骗过对$_FILES['name']['type']的检测。input即表单的name。
+
+PHP防范方面，建议使用php_fileinfo的扩展，这个扩展会通过分析文件来确定Mime-Type，而不是轻信POST的数据。如果是图片的话可以使用getimagesize来检测是否合法。
+
+对于Laravel框架来说，如果没有启用php_fileinfo扩展，建议使用getClientOriginalExtension而不是guessClientExtension，因为后者是根据Payload中的Content-Type（也就是上面我们伪造的部分）来猜测的。
+
+当然，PHP文件上传的漏洞并不只是如此，比如还有图片写马等攻击手段，上传目录有必要设置为不可执行。
+
+看到一篇文章说PHP修复了文件截断的漏洞，可是在我的实验中，上传的文件名还是被截断的呀。
+[](http://www.phpweblog.net/GaRY/archive/2010/12/10/PHP_is_geliavable_now.html)

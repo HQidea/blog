@@ -1,0 +1,80 @@
+公共代码
+
+Function.prototype.method = function (name, func) {
+    this.prototype[name] = func;
+    return this;
+};
+
+有两段相似的代码，执行的过程却相差甚远：
+
+CODE1
+
+String.method('deentityify', function (  ) {
+
+// The entity table. It maps entity names to
+// characters.
+
+    var entity = {
+        quot: '"',
+        lt:   '<',
+        gt:   '>'
+    };
+
+// Return the deentityify method.
+
+    return function (  ) {
+
+// This is the deentityify method. It calls the string
+// replace method, looking for substrings that start
+// with '&' and end with ';'. If the characters in
+// between are in the entity table, then replace the
+// entity with the character from the table. It uses
+// a regular expression (Chapter 7).
+
+        return this.replace(/&([^&;]+);/g,
+            function (a, b) {
+                var r = entity[b];
+                return typeof r === 'string' ? r : a;
+            }
+        );
+    };
+}(  ));
+
+CODE2
+
+String.method('deentityify', function (  ) {
+    var that = this;
+// The entity table. It maps entity names to
+// characters.
+
+    var entity = {
+        quot: '"',
+        lt:   '<',
+        gt:   '>'
+    };
+
+// Return the deentityify method.
+
+    return function (  ) {
+
+// This is the deentityify method. It calls the string
+// replace method, looking for substrings that start
+// with '&' and end with ';'. If the characters in
+// between are in the entity table, then replace the
+// entity with the character from the table. It uses
+// a regular expression (Chapter 7).
+
+        return that.replace(/&([^&;]+);/g,
+            function (a, b) {
+                var r = entity[b];
+                return typeof r === 'string' ? r : a;
+            }
+        );
+    }(  );
+});
+
+看出不同了吗？没错，区别在于CODE1中（）在最后一行，CODE2中（）在倒数第二行，（）表示调用这个函数。
+
+CODE1执行的时候发现最外层的function立即执行，所以进入该function，扫描内部变量和返回。此时，return中的this还没有绑定对象。扫描完毕后将这个function添加到String的原型链上。当某个字符串调用deentityify这个函数时，绑定this到这个字符串，接着执行return中的代码（不再重复扫描）。
+
+CODE2执行的时候发现最外层的function没有执行，所以直接向String的原型链添加这个function。当某个字符串调用deentityify这个函数时，进入该function，扫描和执行内部变量和返回（由于return的function是内部函数，所以this会绑定到window上。所以需要使用that缓存外部function中的this）。（多次调用deentityify可能导致重复扫描）

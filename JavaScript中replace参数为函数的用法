@@ -1,0 +1,26 @@
+String.prototype.replace()
+
+Summary
+
+The replace() method returns a new string with some or all matches of a pattern replaced by a replacement.  The pattern can be a string or a RegExp, and the replacement can be a string or a function to be called for each match.
+
+Specifying a function as a parameter
+
+You can specify a function as the second parameter. In this case, the function will be invoked after the match has been performed. The function's result (return value) will be used as the replacement string. (Note: the above-mentioned special replacement patterns do not apply in this case.) Note that the function will be invoked multiple times for each full match to be replaced if the regular expression in the first parameter is global.
+
+The arguments to the function are as follows:
+
+Possible name	Supplied value
+match	The matched substring. (Corresponds to $& above.)
+p1, p2, ...	The nth parenthesized submatch string, provided the first argument to replace was a RegExp object. (Corresponds to $1, $2, etc. above.) For example, if /(\a+)(\b+)/, was given, p1 is the match for \a+, and p2 for \b+.
+offset	The offset of the matched substring within the total string being examined. (For example, if the total string was "abcd", and the matched substring was "bc", then this argument will be 1.)
+string	The total string being examined.
+(The exact number of arguments will depend on whether the first argument was a RegExp object and, if so, how many parenthesized submatches it specifies.)
+
+The following example will set newString to "abc - 12345 - #$*%":
+
+function replacer(match, p1, p2, p3, offset, string){
+  // p1 is nondigits, p2 digits, and p3 non-alphanumerics
+  return [p1, p2, p3].join(' - ');
+}
+newString = "abc12345#$*%".replace(/([^\d]*)(\d*)([^\w]*)/, replacer);

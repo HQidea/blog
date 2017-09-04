@@ -1,0 +1,17 @@
+由于Ubuntu官方源上的软件版本都太低了（比如nodejs的版本只有0.6），不得不把开发环境转移到Fedora上，而且Fedora属于RHEL系，操作上与Red Hat/CentOS相似。虽然网上都说Fedora是Red Hat的试验品，也没太在意。直到用到了systemd，才发现有多坑。
+
+事情从运行nginx开始（Fedora在VMware中，nginx是使用yum安装的，自带systemd的service，根目录设置在/mnt/hgfs/www），可是用systemctl启动的nginx无法访问根目录（浏览器报403，autoindex已开，日志说permission denied，目录权限777，以前在Ubuntu中都是正常的），但是改到默认的/usr/share/nginx/html就正常了。
+
+一开始觉得是vmhgfs的问题，百度来谷歌去也没什么相关的内容。
+
+后来想那我不用vmhgfs不就ok了，于是新建了一块硬盘，分区格式化（ext4）后mount到/www，结果又是403！
+
+后来尝试了直接运行nginx结果根目录设在哪都不会报错，包括前面的vmhgfs。那就说明问题不是出在vmhgfs上，既然用systemctl跑的nginx和直接运行的结果不同，那么问题一定就出在systemd上。
+
+研究了nginx.service也没有发现任何问题，包括一行一行地注释掉也无效，反正只要不是/dev/sda上的文件系统就报403。
+
+再想能不能不用systemctl来启动nginx，以前在Ubuntu下使用rc.local来启动nginx就一直很正常，于是尝试了新建rc.local来启动nginx，nginx是起来了，结果还是403。后来想想这里的rc.local也是通过systemctl起来的，还是绕不开systemd。
+
+转向去研究systemd，发现这是SysV的替代品，在Fedora 16的时候就应用了。但是网上的资料不多，甚至连http://0pointer.de/blog/projects/systemd.html都无法打开。
+
+最后把根目录设为/，发现少了三个目录，分别是/root /www /lost+found。三者的权限都不同，/lost+found的是700，/root的是550，而/www的是755。连755的目录都无法显示出来没道理啊，700的也应该是无法进入而不是不显示啊，而且同样挂载方式的/boot都能显示出来。尝试进入/home时又报403了，/home是755的权限。真不知道nginx是以谁的权限访问目录了。最后推断问题只能出在systemd对文件系统的管理上了。

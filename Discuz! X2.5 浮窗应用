@@ -1,0 +1,26 @@
+在需要使用浮窗的模板页面添加如下代码（例如footer.htm）：
+
+<a href="javascript:;" title="example" onclick="showWindow('example', 'url/example.php')">example</a>
+
+其中example.php中的代码格式如下：
+
+1.不要改动php部分
+
+2.HTML部分建议使用嵌入式样式表
+
+<?php
+ob_end_clean();
+ob_start();
+@header("Expires: -1");
+@header("Cache-Control: no-store, private, post-check=0, pre-check=0, max-age=0", FALSE);
+@header("Pragma: no-cache");
+@header("Content-type: text/xml; charset=utf-8");
+echo '<?xml version="1.0" encoding="utf-8"?>'."\r\n";
+echo '<root><![CDATA[';
+?>
+
+<!-- HTML代码 -->
+
+<?php
+echo ']]></root>';
+?>

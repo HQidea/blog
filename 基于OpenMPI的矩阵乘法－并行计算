@@ -1,0 +1,84 @@
+#include <stdio.h>
+#include <mpi.h>
+
+#define MAT_ROW 10
+#define MAT_COL 10
+
+int main(int argc, char **argv) {
+    int pid, pnum;
+    int wJob, mJob;
+    int offset = 0;
+    int master = 0, worker;
+    int A[MAT_ROW][MAT_COL], B[MAT_COL], ANS[MAT_ROW] = {0};
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &pid);
+    MPI_Comm_size(MPI_COMM_WORLD, &pnum);
+
+    if (pid == master) {
+        printf("I'am master.\n");
+        printf("A:\n");
+        for (int i = 0; i < MAT_ROW; i++) {
+            for (int j = 0; j < MAT_COL; j++) {
+                A[i][j] = i + j;
+                printf("%d ", A[i][j]);
+            }
+            printf("\n");
+        }
+        printf("B:\n");
+        for (int k = 0; k < MAT_COL; k++) {
+            B[k] = (k + 1) * (k + 1);
+            printf("%d\n", B[k]);
+        }
+
+        wJob = MAT_ROW / pnum;
+        mJob = MAT_ROW - wJob * (pnum - 1);
+
+        for (worker = 1; worker < pnum; worker++) {
+            MPI_Send(&offset, 1, MPI_INT, worker, 0, MPI_COMM_WORLD);
+            MPI_Send(&wJob, 1, MPI_INT, worker, 0, MPI_COMM_WORLD);
+            MPI_Send(&A[offset], MAT_COL * wJob, MPI_INT, worker, 0, MPI_COMM_WORLD);
+            MPI_Send(&B, MAT_COL, MPI_INT, worker, 0, MPI_COMM_WORLD);
+            offset += wJob;
+        }
+
+        for (int i = 0; i < mJob; i++) {
+            for (int j = 0; j < MAT_COL; j++) {
+                ANS[offset + i] += A[offset + i][j] * B[j];
+            }
+            printf("%d\n", ANS[offset + i]);
+        }
+
+        for (worker = 1; worker < pnum; worker++) {
+            MPI_Recv(&offset, 1, MPI_INT, worker, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            //MPI_Recv(&wJob, 1, MPI_INT, worker, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            MPI_Recv(&ANS[offset], wJob, MPI_INT, worker, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        }
+
+        printf("ANS:\n");
+        for (int i = 0; i < MAT_ROW; i++) {
+            printf("%d\n", ANS[i]);
+        }
+        printf("end of ANS\n");
+    }
+    else {
+        printf("I'am worker.\n");
+        MPI_Recv(&offset, 1, MPI_INT, master, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(&wJob, 1, MPI_INT, master, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(&A[offset], MAT_COL * wJob, MPI_INT, master, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(&B, MAT_COL, MPI_INT, master, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        for (int i = 0; i < wJob; i++) {
+            for (int j = 0; j < MAT_COL; j++) {
+                ANS[offset + i] += A[offset + i][j] * B[j];
+            }
+            printf("%d\n", ANS[offset + i]);
+        }
+
+        MPI_Send(&offset, 1, MPI_INT, master, 0, MPI_COMM_WORLD);
+        //MPI_Send(&wJob, 1, MPI_INT, master, 0, MPI_COMM_WORLD);
+        MPI_Send(&ANS[offset], wJob, MPI_INT, master, 0, MPI_COMM_WORLD);
+    }
+
+    MPI_Finalize();
+    return 0;
+}

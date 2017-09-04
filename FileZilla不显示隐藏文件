@@ -1,0 +1,11 @@
+FileZilla作为网站开发与设计中涉及的优秀开源软件，一定会被广大开发者所使用。但是在Windows下FileZilla会显示出所有文件夹，包括系统隐藏文件，让我们这些习惯于Windows资源管理器的人情何以堪。
+
+为了解决这一问题，百度来谷歌去，倒有很多Linux下强行显示隐藏文件的设置，完全找不到不显示隐藏文件的方法。最后用英文在Google找到一篇帖子，来自filezilla-project.org。
+
+楼主向官方提了类似的问题，在4楼得到了官方解释：
+
+Windows is a bad operating system, since the standard API functions and Windows explorer have different views when and how data should be displayed. Thus said, you have to manually disallow access to folders the user should not see.
+
+详见http://forum.filezilla-project.org/viewtopic.php?f=6&t=725
+
+原来我们错怪FileZilla了，都是Windows惹的祸，想来WinRAR也有同样的问题。这也更坚定了我向Linux转型的决心！

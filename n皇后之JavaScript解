@@ -1,0 +1,90 @@
+(function() {
+    var nQueens = function(n) {
+        var count = 0, queen = [], exiCol = [], exiMDia = [], exiVDig = [];
+
+        var search1 = function(row) {
+            var i ,j;
+
+            if (row === n) {
+                // solved
+                count++;
+            }
+            else {
+                for (i = 0; i < n; i++) {
+                    for (j = 0; j < row; j++) {
+                        if (queen[j] === i || j + queen[j] === row + i || j - queen[j] === row - i) {
+                            // dead end
+                            break;
+                        }
+                    }
+                    if (j === row) {
+                        queen[row] = i;
+                        search1(row + 1);
+                    }
+                }
+            }
+        };
+
+        var search2 = function(row) {
+            var i;
+
+            if (row === n) {
+                // solved
+                count++;
+            }
+            else {
+                for (i = 0; i < n; i++) {
+                    if (!exiCol[i] && !exiMDia[i - row + n] && !exiVDig[i + row]) {
+                        exiCol[i] = exiMDia[i - row + n] = exiVDig[i + row] = true;
+                        search2(row + 1);
+                        exiCol[i] = exiMDia[i - row + n] = exiVDig[i + row] = false;
+                    }
+                }
+            }
+        };
+
+        // search1(0);
+        search2(0);
+        console.log(count);
+    };
+    nQueens(14);
+})();
+
+接着是几点说明：
+
+1. search2比search1快(计算14皇后时，search2耗时8~9s，search1耗时16~20s)，因为search2的时间复杂度比search1要小
+2. 但是，上面的search2是经过优化的，不然还是search1快，如下代码：
+
+(function() {
+    var nQueens = function(n) {
+        var count = 0, queen = [], exist = {};
+        exist['col'] = [];
+        exist['mDiag'] = [];
+        exist['vDiag'] = [];
+
+        var search2 = function(row) {
+            var i;
+
+            if (row === n) {
+                // solved
+                count++;
+            }
+            else {
+                for (i = 0; i < n; i++) {
+                    if (!exist['col'][i] && !exist['mDiag'][i - row] && !exist['vDiag'][i + row]) {
+                        exist['col'][i] = exist['mDiag'][i - row] = exist['vDiag'][i + row] = true;
+                        search2(row + 1);
+                        exist['col'][i] = exist['mDiag'][i - row] = exist['vDiag'][i + row] = false;
+                    }
+                }
+            }
+        };
+
+        // search1(0);
+        search2(0);
+        console.log(count);
+    }
+    nQueens(14);
+})();
+
+这里的search2会消耗惊人的50~60s，原因至少有两个①JS对于多深度(n>=2)的Object存取比较慢，建议缓存到变量（所以不推荐使用多维数组）②属性名中存在“-”时(<0)，存取速度大幅下降，不论是Object还是Array，其中一方面原因可能是.toString()比较耗时

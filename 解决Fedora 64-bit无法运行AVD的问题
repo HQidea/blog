@@ -1,0 +1,27 @@
+Eclipse中无法启动AVD，错误是
+
+Failed to start emulator: Cannot run program "/opt/android-sdks//tools/emulator": error=2, No such file or directory
+
+造成问题的原因是AVD默认调用的是emulator，而emulator是32-bit的，Fedora 64-bit默认不会安装32-bit的包。
+
+解决办法有使用软链接，或者安装缺失的包。
+
+安装缺失的包：
+
+1. 在Terminal中运行
+
+/opt/android-sdks/tools/emulator
+
+发现错误变成了
+
+/lib/ld-linux.so.2: bad ELF interpreter: No such file or directory
+
+2. 于是，我们去找谁提供这个文件
+
+yum provides ld-linux.so.2
+
+然后选择安装.i686的包
+
+重复执行上面2步就能解决问题
+
+（一共缺失2个包：glibc.i686 libstdc++.i686）

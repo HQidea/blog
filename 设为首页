@@ -1,0 +1,9 @@
+这里介绍一种方法:
+
+<a onclick="this.style.behavior='url(#default#homepage)';
+this.setHomePage('http://www.hqhome.net');
+return false;" href="">设为首页</a>
+
+return false; 作用是防止刷新页面
+href="" 鼠标移上去的时候状态栏显示的是http://www.hqhome.net，但这貌似不是常用的方法，很难见到href留空的
+如果将href=""改为href="javascript:void(0)"就不需要return false;
